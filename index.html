@@ -4322,8 +4322,17 @@ function switchPage(pageId, skipScroll) {
   // Scroll to top unless we're navigating to a specific section
   if (!skipScroll) window.scrollTo({ top: 0, behavior: 'instant' });
 
-  // Re-init AOS for newly visible content
-  if (typeof AOS !== 'undefined') AOS.refresh();
+  // Force all AOS elements in the new page to show instantly (no animation)
+  if (target) {
+    target.querySelectorAll('[data-aos]').forEach(el => {
+      el.classList.add('aos-animate');
+      el.style.transitionDuration = '0s';
+      // Restore transition after a tick so future scroll reveals still work
+      requestAnimationFrame(() => { el.style.transitionDuration = ''; });
+    });
+    // Also force .reveal elements to be visible instantly
+    target.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+  }
 
   updateProgress();
   updateActiveSubnav();
@@ -4349,6 +4358,13 @@ function navTo(pageId, sectionId, e) {
       }
       const parentCollapsible = el.closest('.collapsible:not(.open)');
       if (parentCollapsible) parentCollapsible.classList.add('open');
+
+      // Force instant display for AOS elements near the target
+      el.querySelectorAll('[data-aos]').forEach(a => {
+        a.classList.add('aos-animate');
+        a.style.transitionDuration = '0s';
+        requestAnimationFrame(() => { a.style.transitionDuration = ''; });
+      });
 
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
